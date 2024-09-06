@@ -16,7 +16,8 @@
 %% API
 -export([
 	 add/2,
-	
+	 
+	 get_cwd/0,
 	 ping/0
 	]).
 
@@ -46,6 +47,9 @@ add(A,B) ->
 
 ping() ->
     gen_server:call(?SERVER,{ping},infinity).
+
+get_cwd() ->
+    gen_server:call(?SERVER,{get_cwd},infinity).
 
 stop() ->
     gen_server:stop(?SERVER).
@@ -91,6 +95,10 @@ handle_call({add,A,B}, _From, State) ->
     Reply = A+B,
     {reply, Reply, State};
 
+
+handle_call({get_cwd}, _From, State) ->
+    Reply = file:get_cwd(),
+    {reply, Reply, State};
 
 handle_call({ping}, _From, State) ->
     Reply =pong,

@@ -50,7 +50,7 @@ test1()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
     %% Change
     42=rpc:call(?Vm,add_test,add,[20,22],5000),
-       
+    {ok,"/home/joq62/erlang/simple_system/test_apps/add_test/_build/default/rel/add_test"}=rpc:call(?Vm,add_test,get_cwd,[],5000),    
     ok.
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
