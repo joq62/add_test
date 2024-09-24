@@ -14,8 +14,13 @@
 -include("add_test.rd").
 
 %% API
+
+
 -export([
 	 add/2,
+	 add_timeout/2,
+	 divi/2,
+	 divi_safe/2,
 	 
 	 get_cwd/0,
 	 ping/0
@@ -42,8 +47,14 @@
 %% @end
 %%--------------------------------------------------------------------
 
+add_timeout(A,B) ->
+    gen_server:call(?SERVER,{add_timeout,A,B},infinity).
 add(A,B) ->
     gen_server:call(?SERVER,{add,A,B},infinity).
+divi(A,B) ->
+    gen_server:call(?SERVER,{divi,A,B},infinity).
+divi_safe(A,B) ->
+    gen_server:call(?SERVER,{divi_safe,A,B},infinity).
 
 ping() ->
     gen_server:call(?SERVER,{ping},infinity).
@@ -92,7 +103,112 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({add,A,B}, _From, State) ->
-    Reply = A+B,
+    Result=try lib_add_test:add(A,B) of
+	       {ok,R}->
+		   R;
+	      {error,Reason}->
+		   {error,["M:F [A]) with reason",lib_add_test,add,[A,B],"Reason=", Reason]}
+	   catch
+	       Event:Reason:Stacktrace ->
+		   {error,[#{event=>Event,
+			     reason=>Reason,
+			     module=>?MODULE,
+			     function=>?FUNCTION_NAME,
+			     line=>?LINE,
+			     args=>[A,B],
+			     stacktrace=>[Stacktrace]}]}
+	   end,
+    Reply=case Result of
+	       {ok,Sum}->
+		  Sum;
+	      ErrorEvent->
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+
+
+handle_call({add_timeout,A,B}, _From, State) ->
+    Reply =rpc:call(node(),lib_add_test,add_timeout,[A,B],100),
+    {reply, Reply, State};
+
+
+handle_call({divi,A,B}, _From, State) ->
+    Result=try lib_add_test:divi(A,B) of
+	       {ok,R}->
+		   R;
+	       {error,Map}->
+		   glurk
+		   
+	   catch
+	       Event:Reason:Stacktrace ->
+		   case Event of
+		       error->
+			   {error,#{
+				    event=>error,
+				    reason=>Reason,
+				    stacktrace=>[{?MODULE,?FUNCTION_NAME,?LINE,[A,B]}|Stacktrace]
+				   }
+			   };
+		       _ ->
+			   {error,#{
+				    event=>Event,
+				    reason=>Reason,
+				    stacktrace=>Stacktrace,
+				    calling_module=>?MODULE,
+				    calling_function=>?FUNCTION_NAME,
+				    calling_line=>?LINE,
+				    calling_args=>[A,B]}}
+		   end
+	   end,
+    Reply=case Result of
+	       {ok,Div}->
+		  Div;
+	      ErrorEvent->
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+
+handle_call({divi_safe,A,B}, _From, State) ->
+       Result=try lib_add_test:divi_safe(A,B) of
+	       {ok,R}->
+		   {ok,R};
+	       {error,Reason}->
+		      {error,[#{event=>failed_call,
+				module=>?MODULE,
+				function=>?FUNCTION_NAME,
+				line=>?LINE,
+				args=>[A,B],
+				reason=>Reason}]}
+		      
+	      catch
+		  Event:Reason:Stacktrace ->
+		      case Event of
+			  error->
+			      {error,#{
+				       event=>error,
+				       reason=>Reason,
+				       stacktrace=>Stacktrace,
+				       calling_module=>?MODULE,
+				       calling_function=>?FUNCTION_NAME,
+				       calling_line=>?LINE,
+				       calling_args=>[A,B]}};
+			  _ ->
+			      {error,#{
+				       event=>Event,
+				       reason=>Reason,
+				       stacktrace=>Stacktrace,
+				       calling_module=>?MODULE,
+				       calling_function=>?FUNCTION_NAME,
+				       calling_line=>?LINE,
+				       calling_args=>[A,B]}}
+		      end
+	      end,
+    Reply=case Result of
+	       {ok,Div}->
+		  Div;
+	      ErrorEvent->
+		  ErrorEvent
+	  end,
     {reply, Reply, State};
 
 
