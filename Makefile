@@ -10,6 +10,8 @@ all:
 	rm -rf ebin;
 	rm -rf rebar.lock;
 	#INFO: Compile application
+	rm -rf common_include;
+	cp -r ~/erlang/common_include .
 	cp config/rebar.config .;
 	rebar3 compile;
 	rm -rf _build;
@@ -30,6 +32,8 @@ clean:
 	rm -rf rebar.lock;
 	#INFO: Compile application
 	cp config/rebar.config .;
+	rm -rf common_include;
+	cp -r ~/erlang/common_include .
 	rebar3 compile;
 	rm -rf _build;
 	rm -rf rebar.lock
@@ -46,6 +50,8 @@ eunit:
 	rm -rf ebin;
 	rm -rf rebar.lock;
 #INFO: Creating eunit test code using test_ebin dir;
+	rm -rf common_include;
+	cp -r ~/erlang/common_include .
 	mkdir test_ebin;
 	cp test_config/test.rebar.config rebar.config;
 	erlc -o test_ebin test/*.erl;
