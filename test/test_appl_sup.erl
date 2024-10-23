@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc adder3 top level supervisor.
+%% @doc test_appl top level supervisor.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(add_test_sup).
+-module(test_appl_sup).
 
 -behaviour(supervisor).
 
@@ -30,8 +30,12 @@ init([]) ->
                  intensity => 0,
                  period => 1},
     ChildSpecs = [
-		  #{id => add_test,     
-		    start => {add_test,start_link,[]}}    
+		  #{id=>log,
+		    start=>{log,start_link,[]}},
+		  #{id=>rd,
+		    start=>{rd,start_link,[]}},
+		   #{id=>add_test,
+		    start=>{add_test,start_link,[]}}
 		 ],
     {ok, {SupFlags, ChildSpecs}}.
 
