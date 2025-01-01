@@ -1,0 +1,2 @@
+-define(NeededApplications,[]).
+-define(ExportedApplications,[add_test]).
