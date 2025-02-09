@@ -22,7 +22,7 @@
 %% API
 
 -export([
- 
+	 add/2
 	]).
 
 
@@ -32,6 +32,7 @@
 
 
 -export([
+	 ping/0,
 	 start/0,
 	 stop/0
 	]).
@@ -51,6 +52,25 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @doc
+%% 
+%% @end
+%%--------------------------------------------------------------------
+-spec add(A::integer(),B::integer()) -> Sum::integer().
+add(A,B) ->
+    gen_server:call(?SERVER,{add,A,B},infinity).
+
+%% ------------------ System  API ------------------------------------
+%%--------------------------------------------------------------------
+%% @doc
+%% Ping
+%% @end
+%%--------------------------------------------------------------------
+-spec ping() -> pong.
+ping() ->
+    gen_server:call(?SERVER,{ping},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -119,6 +139,18 @@ init([]) ->
 
 
 
+handle_call({add,A,B}, From, State) ->
+    Reply = A+B,
+    {reply, Reply, State};
+
+
+
+
+handle_call({ping}, From, State) ->
+    Reply = pong,
+    {reply, Reply, State};
+
+
 handle_call(UnMatchedSignal, From, State) ->
    ?LOG_WARNING("Unmatched signal",[UnMatchedSignal]),
     Reply = {error,[unmatched_signal,UnMatchedSignal, From]},
@@ -153,25 +185,6 @@ handle_cast(UnMatchedSignal, State) ->
 %% 
 %% @end
 %%--------------------------------------------------------------------
-
-handle_info({request, AliasReqId, {add,A,B}}, State) ->
-    Result = {ok,A+B},
-    AliasReqId ! {reply, AliasReqId, Result},
-    {noreply, State};
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Admin 
-%% @end
-%%--------------------------------------------------------------------
-
-handle_info({request, AliasReqId, {ping,[]}}, State) ->
-    Result = {ok,pong},
-    AliasReqId ! {reply, AliasReqId, Result},
-    {noreply, State};
-
-
-
 handle_info(Info, State) ->
     ?LOG_WARNING("Unmatched signal",[Info]),
     {noreply, State}.

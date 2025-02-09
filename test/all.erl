@@ -54,26 +54,6 @@ start()->
     init:stop(),
     ok.
 
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-test_1()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
-
-    {ok,PidAddTest}=client:server_pid(add_test),
-    {ok,pong}=client:call(PidAddTest,{ping,[]},5000),
-    
-    %% correct
-    {ok,42}=client:call(PidAddTest,{add,20,22},5000),
-
-    %% Bad args - the node crashes
-    {error,["timeout ",PidAddTest,{add,20,xx},5000]}=client:call(PidAddTest,{add,20,xx},5000),
-    {badrpc,nodedown}=rpc:call(get_node(?NodeName),log,ping,[],5000),
-    
-    ok.
-
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -83,29 +63,36 @@ test_1()->
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
    
-    
-
     rpc:call(get_node(?NodeName),init,stop,[],5000),
     true=check_node_stopped(get_node(?NodeName)),
     io:format("~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
     %% Start application to test and check node started
     []=os:cmd(?Daemon),
     true=check_node_started(get_node(?NodeName)),
-    
-    %% service discovery
-    ok=application:start(service_discovery),
-    ok=service_discovery:config_needed(?NeededList),
-    ok=service_discovery:update(),
-    {ok,?NeededList}=service_discovery:needed(),    
-    {ok,[{add_test,NodeAddTest,PidAddTest}]}=service_discovery:get_all(add_test),
-    {ok,PidAddTest}=client:server_pid(add_test),
-    {ok,pong}=client:call(PidAddTest,{ping,[]},5000),
     %% Check applications are correct started
     pong=rpc:call(get_node(?NodeName),log,ping,[],5000),
-    
+    pong=rpc:call(get_node(?NodeName),add_test,ping,[],5000),
     %% Change
     
     ok.
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_1()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
+
+   
+    %% correct
+    42=rpc:call(get_node(?NodeName),add_test,add,[20,22],5000),
+
+   
+   
+    ok.
+
+
 
 
 %%--------------------------------------------------------------------
